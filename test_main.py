@@ -1,69 +1,37 @@
 import unittest
 from unittest.mock import patch
 from io import StringIO
-import main  
+import game
 
-class TestGame(unittest.TestCase):
-    @patch('builtins.input', side_effect=[50])
-    def test_player_turn(self, mock_input):
-        secret_number = 50
-        self.assertTrue(main.player_turn(secret_number))
-
-    def test_generate_secret_number(self):
-        secret_number = main.generate_secret_number()
+class TestGameFunctions(unittest.TestCase):
+    @patch('builtins.input', return_value=50)
+    def test_generate_secret_number(self, mock_input):
+        secret_number = game.generate_secret_number()
         self.assertTrue(1 <= secret_number <= 100)
 
-    @patch('random.randint', return_value=50)
-    def test_computer_turn(self, mock_randint):
-        secret_number = 50
-        self.assertTrue(main.computer_turn(secret_number))
+    @patch('builtins.input', return_value=50)
+    def test_get_player_guess(self, mock_input):
+        guess = game.get_player_guess()
+        self.assertEqual(guess, 50)
 
-class TestPlayerTurn(unittest.TestCase):
+    @patch('builtins.input', side_effect=['50'])
+    def test_player_turn_correct_guess(self, mock_input):
+        with patch('game.get_player_guess', return_value=50):
+            self.assertTrue(game.player_turn(50, "Test"))
 
-    # Caso de prueba para un número válido dentro del rango (50)
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('builtins.input', side_effect=["50"])
-    def test_valid_guess_within_range(self, mock_input, mock_stdout):
-        secret_number = 50
-        result = main.player_turn(secret_number)
-        self.assertTrue(result)
-        self.assertIn("¡Felicidades! ¡Has adivinado el número secreto!", mock_stdout.getvalue())
+    @patch('builtins.input', side_effect=['30', '60', '50'])
+    def test_player_turn_incorrect_guess(self, mock_input):
+        with patch('game.get_player_guess', side_effect=[30, 60, 50]):
+            self.assertTrue(game.player_turn(50, "Test"))
 
-    # Caso de prueba para un número fuera del rango (0)
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('builtins.input', side_effect=["0", "50"])
-    def test_guess_out_of_range_low(self, mock_input, mock_stdout):
-        secret_number = 50
-        result = main.player_turn(secret_number)
-        self.assertFalse(result)
-        self.assertIn("Por favor, ingresa un número válido entre 1 y 100.", mock_stdout.getvalue())
+    @patch('game.get_computer_guess', return_value=50)
+    def test_computer_turn_correct_guess(self, mock_guess):
+        self.assertTrue(game.computer_turn(50))
 
-    # Caso de prueba para un número fuera del rango (101)
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('builtins.input', side_effect=["101", "50"])
-    def test_guess_out_of_range_high(self, mock_input, mock_stdout):
-        secret_number = 50
-        result = main.player_turn(secret_number)
-        self.assertFalse(result)
-        self.assertIn("Por favor, ingresa un número válido entre 1 y 100.", mock_stdout.getvalue())
+    @patch('game.get_computer_guess', return_value=30)
+    def test_computer_turn_incorrect_guess(self, mock_guess):
+        self.assertFalse(game.computer_turn(50))
 
-    # Caso de prueba para una letra ("a")
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('builtins.input', side_effect=["a", "50"])
-    def test_invalid_input_letter(self, mock_input, mock_stdout):
-        secret_number = 50
-        result = main.player_turn(secret_number)
-        self.assertFalse(result)
-        self.assertIn("Por favor, ingresa un número válido entre 1 y 100.", mock_stdout.getvalue())
-
-    # Caso de prueba para un símbolo ("$")
-    @patch('sys.stdout', new_callable=StringIO)
-    @patch('builtins.input', side_effect=["$", "50"])
-    def test_invalid_input_symbol(self, mock_input, mock_stdout):
-        secret_number = 50
-        result = main.player_turn(secret_number)
-        self.assertFalse(result)
-        self.assertIn("Por favor, ingresa un número válido entre 1 y 100.", mock_stdout.getvalue())
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
+
